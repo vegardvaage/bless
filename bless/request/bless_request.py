@@ -60,6 +60,8 @@ class BlessHostSchema(BlessSchema):
     kmsauth_token = fields.Str()
     instance_id = fields.Str()
     instance_availability_zone = fields.Str()
+    onebox_name = fields.Str()
+    is_canary = fields.Bool()
 
     @post_load
     def make_bless_request(self, data):
@@ -106,7 +108,7 @@ class BlessUserRequest(BlessRequest):
 class BlessHostRequest(BlessRequest):
     def __init__(self, public_key_to_sign, service_name, service_instance,
                  service_region, kmsauth_token, instance_id,
-                 instance_availability_zone):
+                 instance_availability_zone, onebox_name=None, is_canary=False):
         """
         A BlessRequest must have the following key value pairs to be valid.
         :param public_key_to_sign: The id_rsa.pub that will be used in the SSH request.  This is
@@ -119,6 +121,8 @@ class BlessHostRequest(BlessRequest):
         :param kmsauth_token: KMS auth token to authenticate the host
         :param instance_id: The instance id of the host
         :param instance_availability_zone: The availability zone of the host
+        :param onebox_name: The name of the onebox (or None if it is not a onebox)
+        :param is_canary: Whether the instance is a canary instance
         """
 
         self.public_key_to_sign = public_key_to_sign
@@ -128,3 +132,5 @@ class BlessHostRequest(BlessRequest):
         self.kmsauth_token = kmsauth_token
         self.instance_id = instance_id
         self.instance_availability_zone = instance_availability_zone
+        self.onebox_name = onebox_name
+        self.is_canary = is_canary

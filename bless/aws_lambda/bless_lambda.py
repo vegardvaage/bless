@@ -20,6 +20,74 @@ from bless.ssh.certificate_authorities.ssh_certificate_authority_factory import 
 from bless.ssh.certificates.ssh_certificate_builder import SSHCertificateType
 from bless.ssh.certificates.ssh_certificate_builder_factory import get_ssh_certificate_builder
 
+ec2_resource = boto3.resource('ec2')
+
+
+def get_role_name(instance_id):
+    instance = ec2_resource.Instance(instance_id)
+    try:
+        role = instance.iam_instance_profile['Arn'].split('/')[1]
+    except botocore.exceptions.ClientError:
+        logger.exception('Could not find instance {0}.'.format(instance_id))
+        role = None
+    except IndexError:
+        logger.error(
+            'Could not find the role associated with {0}.'.format(instance_id)
+        )
+        role = None
+    except Exception:
+        logger.exception(
+            'Failed to lookup role for instance id {0}.'.format(instance_id)
+        )
+        role = None
+    return role
+
+
+def validate_instance_id(instance_id, expected_role):
+    role = get_role_name(instance_id)
+    if role == expected_role:
+        return True
+    else:
+        return False
+
+
+def get_hostnames(service_name, service_instance, region, instance_id, availability_zone,
+                  onebox_name, is_canary):
+    # strip 'i' in 'i-12345'
+    instance_id_stripped = instance_id.split('-')[1]
+    cluster_name = '{0}-{1}-{2}'.format(service_name, service_instance, region)
+    az_split = availability_zone.split('-')
+    az_shortened = az_split[2][-1]  # last letter of 3rd block of az
+
+    hostname_prefixes = []
+    hostname_prefixes.append(instance_id)
+    hostname_prefixes.append(instance_id_stripped)
+    hostname_prefixes.append(cluster_name)
+    hostname_prefixes.append(service_name)
+    hostname_prefixes.append('{service_name}-{az_letter}'.format(
+        service_name=service_name,
+        az_letter=az_shortened))
+    hostname_prefixes.append('{service_name}-{service_instance}'.format(
+        service_name=service_name,
+        service_instance=service_instance))
+    if is_canary:
+        hostname_prefixes.append('{service_name}-canary'.format(
+            service_name=service_name))
+        hostname_prefixes.append('{cluster_name}-canary'.format(
+            cluster_name=cluster_name))
+    if onebox_name:
+        hostname_prefixes.append('{onebox_name}.onebox'.format(
+            onebox_name=onebox_name))
+
+    hostname_suffixes = ['.lyft.net', '.ln']
+    hostnames = []
+    for prefix in hostname_prefixes:
+        for suffix in hostname_suffixes:
+            hostnames.append('{prefix}{suffix}'.format(
+                prefix=prefix, suffix=suffix))
+
+    return hostnames
+
 
 def get_certificate_type(certificate_type_option):
     if certificate_type_option == 'user':
@@ -139,7 +207,19 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
             time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(valid_before)))
         cert_builder.set_critical_option_source_address(request.bastion_ip)
     elif certificate_type == SSHCertificateType.HOST:
-        remote_hostnames = []  # TODO
+        expected_role = '{0}-{1}-{2}'.format(
+                request.service_name,
+                request.service_instance,
+                request.region)
+        if not validate_instance_id(request.instance_id, expected_role):
+            raise Exception("Instance id is not validated")
+        remote_hostnames = get_hostnames(request.service_name,
+                                         request.service_instance,
+                                         request.region,
+                                         request.instance_id,
+                                         request.instance_availability_zone,
+                                         request.onebox_name,
+                                         request.is_canary)
         for remote_hostname in remote_hostnames:
             cert_builder.add_valid_principal(remote_hostname)
         key_id = 'request[{}] ssh_key:[{}]  ca:[{}] valid_to[{}]'.format(
