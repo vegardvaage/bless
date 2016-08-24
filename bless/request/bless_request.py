@@ -54,7 +54,12 @@ class BlessUserSchema(BlessSchema):
 
 
 class BlessHostSchema(BlessSchema):
-    remote_hostnames = fields.List(fields.Str())
+    service_name = fields.Str()
+    service_instance = fields.Str()
+    service_region = fields.Str()
+    kmsauth_token = fields.Str()
+    instance_id = fields.Str()
+    instance_availability_zone = fields.Str()
 
     @post_load
     def make_bless_request(self, data):
@@ -99,16 +104,27 @@ class BlessUserRequest(BlessRequest):
 
 
 class BlessHostRequest(BlessRequest):
-    def __init__(self, public_key_to_sign, remote_hostnames):
+    def __init__(self, public_key_to_sign, service_name, service_instance,
+                 service_region, kmsauth_token, instance_id,
+                 instance_availability_zone):
         """
         A BlessRequest must have the following key value pairs to be valid.
-        :param bastion_ip: The source IP where the SSH connection will be initiated from.  This is
-        enforced in the issued certificate.
         :param public_key_to_sign: The id_rsa.pub that will be used in the SSH request.  This is
         enforced in the issued certificate.
-        :param remote_hostnames: A list of hostnames on the server for which the certificate is valid
-        request. This is enforced in the issued certificate.
+        :param service_name: The service name. This is used to generate hostnames and verify kmsauth.
+        :param service_instance: The service instance name. This is used to generate hostnames
+        and verify kmsauth. (e.g. staging, production)
+        :param service_region: The service region name. This is used to generate hostnames
+        and verify kmsauth. (e.g. iad, sfo)
+        :param kmsauth_token: KMS auth token to authenticate the host
+        :param instance_id: The instance id of the host
+        :param instance_availability_zone: The availability zone of the host
         """
 
         self.public_key_to_sign = public_key_to_sign
-        self.remote_hostnames = remote_hostnames
+        self.service_name = service_name
+        self.service_instance = service_instance
+        self.service_region = service_region
+        self.kmsauth_token = kmsauth_token
+        self.instance_id = instance_id
+        self.instance_availability_zone = instance_availability_zone

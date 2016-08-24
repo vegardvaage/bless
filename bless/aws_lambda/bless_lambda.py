@@ -12,7 +12,8 @@ import os
 import kmsauth
 from bless.config.bless_config import BlessConfig, BLESS_OPTIONS_SECTION, \
     CERTIFICATE_VALIDITY_WINDOW_SEC_OPTION, ENTROPY_MINIMUM_BITS_OPTION, RANDOM_SEED_BYTES_OPTION, \
-    BLESS_CA_SECTION, CA_PRIVATE_KEY_FILE_OPTION, LOGGING_LEVEL_OPTION, CERTIFICATE_TYPE_OPTION
+    BLESS_CA_SECTION, CA_PRIVATE_KEY_FILE_OPTION, LOGGING_LEVEL_OPTION, CERTIFICATE_TYPE_OPTION, \
+    KMSAUTH_KEY_ID_OPTION
 from bless.request.bless_request import BlessUserSchema, BlessHostSchema
 from bless.ssh.certificate_authorities.ssh_certificate_authority_factory import \
     get_ssh_certificate_authority
@@ -108,9 +109,9 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
     valid_before = current_time + certificate_validity_window_seconds
     valid_after = current_time - certificate_validity_window_seconds
 
-    # Authenticate the user with KMS, if key is setup
-    if (kmsauth_key_id):
-        if (request.kmsauth_token):
+    # Authenticate the host with KMS, if key is setup
+    if kmsauth_key_id:
+        if request.kmsauth_token:
             validator = kmsauth.KMSTokenValidator(
                 kmsauth_key_id,
                 kmsauth_key_id,
@@ -138,7 +139,8 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
             time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(valid_before)))
         cert_builder.set_critical_option_source_address(request.bastion_ip)
     elif certificate_type == SSHCertificateType.HOST:
-        for remote_hostname in request.remote_hostnames:
+        remote_hostnames = []  # TODO
+        for remote_hostname in remote_hostnames:
             cert_builder.add_valid_principal(remote_hostname)
         key_id = 'request[{}] ssh_key:[{}]  ca:[{}] valid_to[{}]'.format(
             context.aws_request_id, cert_builder.ssh_public_key.fingerprint,
