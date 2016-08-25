@@ -28,6 +28,9 @@ KMS_KEY_ID_OPTION = 'kms_key_id'
 KMSAUTH_KEY_ID_OPTION = 'kmsauth_key_id'
 KMSAUTH_KEY_ID_DEFAULT = None
 
+KMSAUTH_CONTEXT_OPTION = 'kmsauth_context'
+KMSAUTH_CONTEXT_DEFAULT = None
+
 REGION_PASSWORD_OPTION_SUFFIX = '_password'
 
 
@@ -49,7 +52,8 @@ class BlessConfig(ConfigParser.RawConfigParser):
                     RANDOM_SEED_BYTES_OPTION: RANDOM_SEED_BYTES_DEFAULT,
                     LOGGING_LEVEL_OPTION: LOGGING_LEVEL_DEFAULT,
                     CERTIFICATE_TYPE_OPTION: CERTIFICATE_TYPE_DEFAULT,
-                    KMSAUTH_KEY_ID_OPTION: KMSAUTH_KEY_ID_DEFAULT}
+                    KMSAUTH_KEY_ID_OPTION: KMSAUTH_KEY_ID_DEFAULT,
+                    KMSAUTH_CONTEXT_OPTION: KMSAUTH_CONTEXT_DEFAULT}
         ConfigParser.RawConfigParser.__init__(self, defaults=defaults)
         self.read(config_file)
 
