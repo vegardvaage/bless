@@ -21,11 +21,33 @@ from bless.ssh.certificate_authorities.ssh_certificate_authority_factory import 
 from bless.ssh.certificates.ssh_certificate_builder import SSHCertificateType
 from bless.ssh.certificates.ssh_certificate_builder_factory import get_ssh_certificate_builder
 
-ec2_resource = boto3.resource('ec2')
 logger = logging.getLogger()
 
 
+def get_role_name_from_request(request):
+    if request.onebox_name:
+        return 'onebox-production-iad'
+    else:
+        return '{}-{}-{}'.format(
+            request.service_name,
+            request.service_instance,
+            request.service_region)
+
+
 def get_role_name(instance_id):
+    sts_client = boto3.client('sts')
+    assumed_role_object = sts_client.assume_role(
+        RoleArn='arn:aws:iam::173840052742:role/bless-host-execution',
+        RoleSessionName='ZimrideAssumedRoleSession'
+    )
+    credentials = assumed_role_object['Credentials']
+    ec2_resource = boto3.resource(
+        'ec2',
+        aws_access_key_id=credentials['AccessKeyId'],
+        aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken']
+    )
+
     instance = ec2_resource.Instance(instance_id)
     try:
         role = instance.iam_instance_profile['Arn'].split('/')[1]
@@ -190,10 +212,8 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
                 region
             )
             # decrypt_token will raise a TokenValidationError if token doesn't match
-            validator.decrypt_token("2/service/{}-{}-{}".format(
-                request.service_name,
-                request.service_instance,
-                request.service_region), request.kmsauth_token)
+            role_name = get_role_name_from_request(request)
+            validator.decrypt_token(role_name, request.kmsauth_token)
         else:
             raise ValueError('Invalid request, missing kmsauth token')
 
@@ -210,10 +230,7 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
             time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(valid_before)))
         cert_builder.set_critical_option_source_address(request.bastion_ip)
     elif certificate_type == SSHCertificateType.HOST:
-        expected_role = '{0}-{1}-{2}'.format(
-            request.service_name,
-            request.service_instance,
-            request.service_region)
+        expected_role = get_role_name_from_request(request)
         if not validate_instance_id(request.instance_id, expected_role):
             raise Exception("Instance id is not validated")
         remote_hostnames = get_hostnames(request.service_name,
