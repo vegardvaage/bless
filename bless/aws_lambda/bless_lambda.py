@@ -8,6 +8,7 @@ import logging
 import time
 
 import boto3
+import botocore
 import os
 import kmsauth
 from bless.config.bless_config import BlessConfig, BLESS_OPTIONS_SECTION, \
@@ -21,6 +22,7 @@ from bless.ssh.certificates.ssh_certificate_builder import SSHCertificateType
 from bless.ssh.certificates.ssh_certificate_builder_factory import get_ssh_certificate_builder
 
 ec2_resource = boto3.resource('ec2')
+logger = logging.getLogger()
 
 
 def get_role_name(instance_id):
@@ -127,7 +129,6 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: {}'.format(logging_level))
 
-    logger = logging.getLogger()
     logger.setLevel(numeric_level)
 
     certificate_validity_window_seconds = config.getint(BLESS_OPTIONS_SECTION,
@@ -208,9 +209,9 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
         cert_builder.set_critical_option_source_address(request.bastion_ip)
     elif certificate_type == SSHCertificateType.HOST:
         expected_role = '{0}-{1}-{2}'.format(
-                request.service_name,
-                request.service_instance,
-                request.region)
+            request.service_name,
+            request.service_instance,
+            request.region)
         if not validate_instance_id(request.instance_id, expected_role):
             raise Exception("Instance id is not validated")
         remote_hostnames = get_hostnames(request.service_name,
