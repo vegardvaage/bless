@@ -32,7 +32,8 @@ setup(
         'pyasn1==0.1.9',
         'pycparser==2.14',
         'python-dateutil==2.5.3',
-        'six==1.10.0'
+        'six==1.10.0',
+        'kmsauth==0.1.4'
     ],
     extras_require={
         'tests': [
@@ -42,7 +43,8 @@ setup(
             'pep8==1.7.0',
             'py==1.4.31',
             'pyflakes==1.2.3',
-            'pytest==2.9.2'
+            'pytest==2.9.2',
+            'pytest-mock==1.2'
         ]
     }
 )

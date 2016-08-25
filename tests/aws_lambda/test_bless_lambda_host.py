@@ -12,14 +12,21 @@ class Context(object):
 
 
 VALID_TEST_REQUEST = {
-    "remote_hostnames": ["example.com", "example1.com"],
     "public_key_to_sign": EXAMPLE_RSA_PUBLIC_KEY,
+    "service_name": "testservice",
+    "service_instance": "production",
+    "service_region": "iad",
+    "kmsauth_token": "testkmsauthtoken",
+    "instance_id": "i-123456",
+    "instance_availability_zone": "us-east-1d",
+    "is_canary": False
 }
 
-os.environ['AWS_REGION'] = 'us-west-2'
+os.environ['AWS_REGION'] = 'us-east-1'
 
 
-def test_basic_local_request():
+def test_basic_local_request(mocker):
+    mocker.patch('bless.aws_lambda.bless_lambda.validate_instance_id', return_value=True)
     cert = lambda_handler(VALID_TEST_REQUEST, context=Context,
                           ca_private_key_password=RSA_CA_PRIVATE_KEY_PASSWORD,
                           entropy_check=False,

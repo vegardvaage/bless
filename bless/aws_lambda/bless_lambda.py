@@ -53,11 +53,12 @@ def validate_instance_id(instance_id, expected_role):
         return False
 
 
-def get_hostnames(service_name, service_instance, region, instance_id, availability_zone,
-                  onebox_name, is_canary):
+def get_hostnames(service_name, service_instance, service_region, instance_id,
+                  availability_zone, onebox_name, is_canary):
     # strip 'i' in 'i-12345'
     instance_id_stripped = instance_id.split('-')[1]
-    cluster_name = '{0}-{1}-{2}'.format(service_name, service_instance, region)
+    cluster_name = '{0}-{1}-{2}'.format(
+        service_name, service_instance, service_region)
     az_split = availability_zone.split('-')
     az_shortened = az_split[2][-1]  # last letter of 3rd block of az
 
@@ -191,7 +192,7 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
             validator.decrypt_token("2/service/{}-{}-{}".format(
                 request.service_name,
                 request.service_instance,
-                request.region), request.kmsauth_token)
+                request.service_region), request.kmsauth_token)
         else:
             raise ValueError('Invalid request, missing kmsauth token')
 
@@ -211,12 +212,12 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
         expected_role = '{0}-{1}-{2}'.format(
             request.service_name,
             request.service_instance,
-            request.region)
+            request.service_region)
         if not validate_instance_id(request.instance_id, expected_role):
             raise Exception("Instance id is not validated")
         remote_hostnames = get_hostnames(request.service_name,
                                          request.service_instance,
-                                         request.region,
+                                         request.service_region,
                                          request.instance_id,
                                          request.instance_availability_zone,
                                          request.onebox_name,
@@ -236,7 +237,7 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
     cert = cert_builder.get_cert_file()
 
     if certificate_type == SSHCertificateType.HOST:
-        remote_name = ', '.join(request.remote_hostnames)
+        remote_name = ', '.join(remote_hostnames)
         bastion_ip = None
     else:
         remote_name = request.remote_username
