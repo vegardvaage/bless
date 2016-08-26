@@ -213,7 +213,7 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
             )
             # decrypt_token will raise a TokenValidationError if token doesn't match
             role_name = get_role_name_from_request(request)
-            validator.decrypt_token(role_name, request.kmsauth_token)
+            validator.decrypt_token('2/service/{}'.format(role_name), request.kmsauth_token)
         else:
             raise ValueError('Invalid request, missing kmsauth token')
 
