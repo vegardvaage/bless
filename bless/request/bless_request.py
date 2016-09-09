@@ -60,7 +60,7 @@ class BlessHostSchema(BlessSchema):
     kmsauth_token = fields.Str()
     instance_id = fields.Str()
     instance_availability_zone = fields.Str()
-    onebox_name = fields.Str()
+    onebox_name = fields.Str(allow_none=True)
     is_canary = fields.Bool()
 
     @post_load

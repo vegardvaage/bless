@@ -19,7 +19,8 @@ VALID_TEST_REQUEST = {
     "kmsauth_token": "testkmsauthtoken",
     "instance_id": "i-123456",
     "instance_availability_zone": "us-east-1d",
-    "is_canary": False
+    "is_canary": False,
+    "onebox_name": None
 }
 
 os.environ['AWS_REGION'] = 'us-east-1'
