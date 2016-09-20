@@ -81,7 +81,7 @@ def validate_instance_id(instance_id, request):
         return False
     if (role_service_name in request.service_name and
             role_service_instance == request.service_instance and
-            role_region = request.service_region):
+            role_region == request.service_region):
         return True
     else:
         return False
