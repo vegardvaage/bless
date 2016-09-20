@@ -67,9 +67,21 @@ def get_role_name(instance_id):
     return role
 
 
-def validate_instance_id(instance_id, expected_role):
+def validate_instance_id(instance_id, request):
     role = get_role_name(instance_id)
-    if role == expected_role:
+    try:
+        role_split = role.split('-')
+        role_service_name = role_split[0]
+        role_service_instance = role_split[1]
+        role_service_region = role_split[2]
+    except IndexError:
+        logger.error(
+            'Role is not a valid format {0}.'.format(role)
+        )
+        return False
+    if (role_service_name in request.service_name and
+            role_service_instance == request.service_instance and
+            role_service_region == request.service_region):
         return True
     else:
         return False
@@ -230,8 +242,7 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
             time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(valid_before)))
         cert_builder.set_critical_option_source_address(request.bastion_ip)
     elif certificate_type == SSHCertificateType.HOST:
-        expected_role = get_role_name_from_request(request)
-        if not validate_instance_id(request.instance_id, expected_role):
+        if not validate_instance_id(request.instance_id, request):
             raise Exception("Instance id is not validated")
         remote_hostnames = get_hostnames(request.service_name,
                                          request.service_instance,
