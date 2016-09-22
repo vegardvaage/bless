@@ -23,6 +23,11 @@ from bless.ssh.certificates.ssh_certificate_builder_factory import get_ssh_certi
 
 logger = logging.getLogger()
 
+REGIONS = {
+    'iad': 'us-east-1',
+    'sfo': 'us-west-1'
+}
+
 
 def get_role_name_from_request(request):
     if request.onebox_name:
@@ -34,7 +39,7 @@ def get_role_name_from_request(request):
             request.service_region)
 
 
-def get_role_name(instance_id):
+def get_role_name(instance_id, aws_region='us-east-1'):
     sts_client = boto3.client('sts')
     assumed_role_object = sts_client.assume_role(
         RoleArn='arn:aws:iam::173840052742:role/bless-host-execution',
@@ -43,6 +48,7 @@ def get_role_name(instance_id):
     credentials = assumed_role_object['Credentials']
     ec2_resource = boto3.resource(
         'ec2',
+        region_name=aws_region,
         aws_access_key_id=credentials['AccessKeyId'],
         aws_secret_access_key=credentials['SecretAccessKey'],
         aws_session_token=credentials['SessionToken']
@@ -68,7 +74,8 @@ def get_role_name(instance_id):
 
 
 def validate_instance_id(instance_id, request):
-    role = get_role_name(instance_id)
+    aws_region = REGIONS.get(request.service_region, 'us-east-1')
+    role = get_role_name(instance_id, aws_region)
     try:
         role_split = role.split('-')
         role_service_name = role_split[0]
