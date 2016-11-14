@@ -19,7 +19,7 @@ setup(
     packages=find_packages(exclude=["test*"]),
     install_requires=[
         'boto3==1.3.1',
-        'botocore==1.4.37',
+        'botocore==1.4.58',
         'cffi==1.7.0',
         'cryptography==1.4',
         'docutils==0.12',
