@@ -11,6 +11,7 @@ import boto3
 import os
 from kmsauth import KMSTokenValidator, TokenValidationError
 from botocore.exceptions import ClientError
+from marshmallow.exceptions import ValidationError
 from bless.config.bless_config import BlessConfig, BLESS_OPTIONS_SECTION, \
     CERTIFICATE_VALIDITY_BEFORE_SEC_OPTION, CERTIFICATE_VALIDITY_AFTER_SEC_OPTION, \
     ENTROPY_MINIMUM_BITS_OPTION, RANDOM_SEED_BYTES_OPTION, \
@@ -65,7 +66,14 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
 
     # Process cert request
     schema = BlessSchema(strict=True)
-    request = schema.load(event).data
+    try:
+        request = schema.load(event).data
+    except ValidationError as e:
+        return {
+            'errorType': 'ValidationError',
+            'errorMessage': str(e)
+        }
+
     logger.info('Bless lambda invoked by [user: {0}, bastion_ips:{1}, public_key: {2}, kmsauth_token:{3}]'.format(
         request.bastion_user,
         request.bastion_user_ip,
