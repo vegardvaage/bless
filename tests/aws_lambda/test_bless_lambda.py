@@ -21,6 +21,15 @@ VALID_TEST_REQUEST = {
     "bastion_user_ip": "127.0.0.1"
 }
 
+INVALID_TEST_REQUEST = {
+    "remote_username": "user",
+    "public_key_to_sign": EXAMPLE_RSA_PUBLIC_KEY,
+    "command": "ssh user@server",
+    "bastion_ips": "invalid_ip",
+    "bastion_user": "user",
+    "bastion_user_ip": "invalid_ip"
+}
+
 VALID_TEST_REQUEST_KMSAUTH = {
     "remote_username": "user",
     "public_key_to_sign": EXAMPLE_RSA_PUBLIC_KEY,
@@ -65,6 +74,13 @@ def test_invalid_kmsauth_request():
                           config_file=os.path.join(os.path.dirname(__file__),
                               'bless-test-kmsauth.cfg'))
     assert output['errorType'] == 'KMSAuthValidationError'
+
+def test_invalid_request():
+    output = lambda_handler(INVALID_TEST_REQUEST, context=Context,
+                          ca_private_key_password=RSA_CA_PRIVATE_KEY_PASSWORD,
+                          entropy_check=False,
+                          config_file=os.path.join(os.path.dirname(__file__), 'bless-test.cfg'))
+    assert output['errorType'] == 'InputValidationError'
 
 def test_local_request_key_not_found():
     with pytest.raises(IOError):
