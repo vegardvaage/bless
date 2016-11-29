@@ -80,7 +80,7 @@ def test_invalid_request():
                           ca_private_key_password=RSA_CA_PRIVATE_KEY_PASSWORD,
                           entropy_check=False,
                           config_file=os.path.join(os.path.dirname(__file__), 'bless-test.cfg'))
-    assert output['errorType'] == 'ValidationError'
+    assert output['errorType'] == 'InputValidationError'
 
 def test_local_request_key_not_found():
     with pytest.raises(IOError):

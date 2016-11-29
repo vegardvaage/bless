@@ -70,7 +70,7 @@ def lambda_handler(event, context=None, ca_private_key_password=None,
         request = schema.load(event).data
     except ValidationError as e:
         return {
-            'errorType': 'ValidationError',
+            'errorType': 'InputValidationError',
             'errorMessage': str(e)
         }
 
